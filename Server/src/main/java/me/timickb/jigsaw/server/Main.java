@@ -4,6 +4,7 @@ import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Main {
@@ -80,6 +81,8 @@ public class Main {
         } catch (FigureSpawnerException e) {
             e.printStackTrace();
             System.out.println("[FATAL] Couldn't create game figure spawner");
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
         } finally {
             System.out.println("Server stopped.");
         }

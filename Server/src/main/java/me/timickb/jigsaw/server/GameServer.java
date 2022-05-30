@@ -6,6 +6,7 @@ import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.sql.SQLException;
 import java.util.Optional;
 
 public class GameServer implements Runnable {
@@ -13,20 +14,22 @@ public class GameServer implements Runnable {
 
     private final ServerSocket serverSocket;
     private final FigureSpawner figureSpawner;
+    private final Database database;
 
     private Player firstPlayer;
     private Player secondPlayer;
 
-    private int gameTimeLimit;
-    private int requiredPlayersCount;
+    private final int gameTimeLimit;
+    private final int requiredPlayersCount;
     private int currentGameTime;
 
-    public GameServer(int port, int playersCount, int gameTimeLimit) throws IOException, FigureSpawnerException {
+    public GameServer(int port, int playersCount, int gameTimeLimit) throws IOException, FigureSpawnerException, SQLException {
         this.serverSocket = new ServerSocket(port);
         this.figureSpawner = new FigureSpawnerCreator().createFromDefaultFiles();
         this.requiredPlayersCount = playersCount;
         this.gameTimeLimit = gameTimeLimit;
         this.currentGameTime = 0;
+        this.database = new Database();
     }
 
     @Override
@@ -38,8 +41,9 @@ public class GameServer implements Runnable {
         // TODO
     }
 
-    public void stop() {
-        // TODO
+    public void stop() throws IOException {
+        database.close();
+        serverSocket.close();
     }
 
     public void printGameStatus() {
