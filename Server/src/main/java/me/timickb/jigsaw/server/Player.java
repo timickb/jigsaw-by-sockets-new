@@ -55,41 +55,46 @@ public class Player implements Runnable {
                 Message message = messenger.readMessage();
 
                 switch (message.type()) {
-                    // case FIGURE_PLACED -> handleFigurePlaced();
-                    // case LEAVE -> handlePlayerLeave();
+                    case FIGURE_PLACED -> handleFigurePlaced();
+                    case LEAVE -> handlePlayerLeave();
                 }
             }
 
         } catch (IOException e) {
-            // server.removePlayer(this);
-            // System.out.printf("[Player %d] I'm disconnected\n", id);
+            server.removePlayer(id);
+            System.out.printf("[Player %d] I'm disconnected\n", id);
         } catch (FigureSpawnerException e) {
             e.printStackTrace();
         }
     }
 
     private void handlePlayerLeave() throws IOException {
-//        server.removePlayer(this);
-//        for (Player p: server.getPlayers()) {
-//            p.sendMessage(MessageType.SOMEONE_LEFT, login);
-//        }
+        server.removePlayer(id);
+        // Send leave information to rival.
+        Optional<Player> rivalOpt = server.getRival(id);
+        if (rivalOpt.isPresent()) {
+            rivalOpt.get().sendMessage(MessageType.SOMEONE_LEFT, login);
+        }
     }
 
     private void handleFigurePlaced() throws IOException, FigureSpawnerException {
         ++gameScore;
         lastFigurePlacedMoment = server.getCurrentGameTime();
-//        for (Player p : server.getPlayers()) {
-//            p.sendScoreUpdate();
-//        }
+
+        sendScoreUpdate();
+
+        Optional<Player> rivalOpt = server.getRival(id);
+        if (rivalOpt.isPresent()) {
+            rivalOpt.get().sendScoreUpdate();
+        }
         sendNextFigure();
     }
 
     public void sendScoreUpdate() throws IOException {
-//        Optional<Player> rival = server.getPlayers().stream()
-//                .filter(p -> p != this).findFirst();
-//        int rivalScore = rival.map(Player::getGameScore).orElse(-1);
-//        String data = String.format("%d#%d", gameScore, rivalScore);
-//        messenger.sendMessage(MessageType.SCORE_UPDATED, data);
+        Optional<Player> rival = server.getRival(id);
+        int rivalScore = rival.map(Player::getGameScore).orElse(-1);
+        String data = String.format("%d#%d", gameScore, rivalScore);
+        messenger.sendMessage(MessageType.SCORE_UPDATED, data);
     }
 
     private void requestLogin(Messenger messenger) throws IOException, FigureSpawnerException {
@@ -111,9 +116,9 @@ public class Player implements Runnable {
                 System.out.printf("[Player %d] Authorized\n", this.id);
 
                 // Если достаточно игроков набрано - запускаем игру.
-//                if (server.getPlayers().size() == server.getRequiredPlayersCount()) {
-//                    server.startGame();
-//                }
+                if (server.getOnlinePlayersCount() == server.getRequiredPlayersCount()) {
+                    server.startGame();
+                }
 
                 break;
             }
@@ -130,9 +135,11 @@ public class Player implements Runnable {
         if (figureQueue.isEmpty()) {
             synchronized (server) {
                 Figure next = server.getFigureSpawner().getNext();
-//                for (Player p : server.getPlayers()) {
-//                    p.addFigureToQueue(next);
-//                }
+
+                addFigureToQueue(next);
+
+                Optional<Player> rival = server.getRival(id);
+                rival.ifPresent(player -> player.addFigureToQueue(next));
             }
         }
         messenger.sendMessage(MessageType.NEW_FIGURE, Objects.requireNonNull(figureQueue.poll()).toString());
