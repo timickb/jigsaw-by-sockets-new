@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="me.timickb.jigsaw.client.JigsawController"
+            prefHeight="400.0" prefWidth="600.0">
+
+    <top>
+        <BorderPane style="-fx-background-color: #336699" styleClass="header">
+            <padding>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="10.0"/>
+            </padding>
+            <left>
+                <Label
+                        fx:id="pointCountView"
+                        styleClass="label"
+                        GridPane.columnIndex="0"
+                        GridPane.rowIndex="0">
+                    Ходы: 0
+                </Label>
+            </left>
+            <right>
+                <Label
+                        fx:id="timeView"
+                        styleClass="label"
+                        GridPane.columnIndex="0"
+                        GridPane.rowIndex="0">
+                    Время: 0 сек.
+                </Label>
+            </right>
+        </BorderPane>
+    </top>
+    <left>
+        <GridPane styleClass="field" vgap="15" hgap="5">
+            <padding>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="10.0"/>
+            </padding>
+            <Button
+                    fx:id="startButton"
+                    GridPane.columnIndex="0"
+                    GridPane.rowIndex="0">
+                Новая игра
+            </Button>
+            <Button
+                    fx:id="exitButton"
+                    GridPane.columnIndex="0"
+                    GridPane.rowIndex="1">
+                Выйти
+            </Button>
+            <HBox fx:id="spawnerPaneContainer"
+                  GridPane.columnIndex="0"
+                  GridPane.rowIndex="2">
+                <padding>
+                    <Insets bottom="5.0" left="15.0" right="15.0" top="5.0"/>
+                </padding>
+                <Pane
+                        minWidth="50"
+                        minHeight="50"
+                        fx:id="spawnerPane">
+                </Pane>
+            </HBox>
+        </GridPane>
+    </left>
+    <right>
+        <GridPane fx:id="fieldView" vgap="5" hgap="5" styleClass="field">
+            <padding>
+                <Insets bottom="10.0" left="20.0" right="10.0" top="10.0"/>
+            </padding>
+        </GridPane>
+    </right>
+</BorderPane>
