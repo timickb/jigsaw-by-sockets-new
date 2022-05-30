@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 public class GameServer implements Runnable {
+    public static final int MAX_LOGIN_LENGTH = 20;
+
     private final ServerSocket serverSocket;
     private final FigureSpawner figureSpawner;
 
@@ -43,5 +45,13 @@ public class GameServer implements Runnable {
             return 2;
         }
         return 0;
+    }
+
+    public FigureSpawner getFigureSpawner() {
+        return figureSpawner;
+    }
+
+    public int getCurrentGameTime() {
+        return currentGameTime;
     }
 }

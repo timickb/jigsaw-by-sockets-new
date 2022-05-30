@@ -1,6 +1,7 @@
 package me.timickb.jigsaw.server;
 
 import me.timickb.jigsaw.messenger.Message;
+import me.timickb.jigsaw.messenger.MessageType;
 import me.timickb.jigsaw.messenger.Messenger;
 import me.timickb.jigsaw.server.domain.Figure;
 import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
@@ -8,6 +9,8 @@ import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayDeque;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Queue;
 
 /**
@@ -66,27 +69,27 @@ public class Player implements Runnable {
     }
 
     private void handlePlayerLeave() throws IOException {
-        server.removePlayer(this);
-        for (Player p: server.getPlayers()) {
-            p.sendMessage(MessageType.SOMEONE_LEFT, login);
-        }
+//        server.removePlayer(this);
+//        for (Player p: server.getPlayers()) {
+//            p.sendMessage(MessageType.SOMEONE_LEFT, login);
+//        }
     }
 
     private void handleFigurePlaced() throws IOException, FigureSpawnerException {
         ++gameScore;
         lastFigurePlacedMoment = server.getCurrentGameTime();
-        for (Player p : server.getPlayers()) {
-            p.sendScoreUpdate();
-        }
+//        for (Player p : server.getPlayers()) {
+//            p.sendScoreUpdate();
+//        }
         sendNextFigure();
     }
 
     public void sendScoreUpdate() throws IOException {
-        Optional<Player> rival = server.getPlayers().stream()
-                .filter(p -> p != this).findFirst();
-        int rivalScore = rival.map(Player::getGameScore).orElse(-1);
-        String data = String.format("%d#%d", gameScore, rivalScore);
-        messenger.sendMessage(MessageType.SCORE_UPDATED, data);
+//        Optional<Player> rival = server.getPlayers().stream()
+//                .filter(p -> p != this).findFirst();
+//        int rivalScore = rival.map(Player::getGameScore).orElse(-1);
+//        String data = String.format("%d#%d", gameScore, rivalScore);
+//        messenger.sendMessage(MessageType.SCORE_UPDATED, data);
     }
 
     private void requestLogin(Messenger messenger) throws IOException, FigureSpawnerException {
@@ -100,7 +103,7 @@ public class Player implements Runnable {
 
             answer = messenger.readMessage();
             if (answer.type() == MessageType.LOGIN && !answer.data().isEmpty()
-                    && answer.data().length() <= Server.MAX_LOGIN_LENGTH) {
+                    && answer.data().length() <= GameServer.MAX_LOGIN_LENGTH) {
                 // Login successfully
                 this.login = answer.data();
                 messenger.sendMessage(MessageType.AUTHORIZED, this.login);
@@ -108,9 +111,9 @@ public class Player implements Runnable {
                 System.out.printf("[Player %d] Authorized\n", this.id);
 
                 // Если достаточно игроков набрано - запускаем игру.
-                if (server.getPlayers().size() == server.getRequiredPlayersCount()) {
-                    server.startGame();
-                }
+//                if (server.getPlayers().size() == server.getRequiredPlayersCount()) {
+//                    server.startGame();
+//                }
 
                 break;
             }
@@ -127,9 +130,9 @@ public class Player implements Runnable {
         if (figureQueue.isEmpty()) {
             synchronized (server) {
                 Figure next = server.getFigureSpawner().getNext();
-                for (Player p : server.getPlayers()) {
-                    p.addFigureToQueue(next);
-                }
+//                for (Player p : server.getPlayers()) {
+//                    p.addFigureToQueue(next);
+//                }
             }
         }
         messenger.sendMessage(MessageType.NEW_FIGURE, Objects.requireNonNull(figureQueue.poll()).toString());

@@ -3,6 +3,7 @@ package me.timickb.jigsaw.server;
 import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Scanner;
 
 public class Main {
@@ -15,6 +16,9 @@ public class Main {
 
     public static void main(String[] args) {
         System.out.println("--- Jigsaw Server ---");
+
+        URL url = Main.class.getClassLoader()
+                .getResource("figures/f1.txt");
 
         int serverPort = DEFAULT_PORT;
         int playersCount = DEFAULT_MAX_PLAYERS;
