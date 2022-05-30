@@ -17,9 +17,6 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("--- Jigsaw Server ---");
 
-        URL url = Main.class.getClassLoader()
-                .getResource("figures/f1.txt");
-
         int serverPort = DEFAULT_PORT;
         int playersCount = DEFAULT_MAX_PLAYERS;
         int gameTime = DEFAULT_GAME_TIME;

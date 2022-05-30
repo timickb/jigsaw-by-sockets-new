@@ -4,37 +4,38 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>me.timickb.jigsaw.client</groupId>
-    <artifactId>Client</artifactId>
-    <version>0.1</version>
-    <name>Client</name>
-
     <parent>
         <groupId>me.timickb.jigsaw</groupId>
         <version>0.1</version>
         <artifactId>JigsawSockets</artifactId>
     </parent>
 
+    <artifactId>Client</artifactId>
+    <version>0.1</version>
+    <name>Client</name>
+
+    <packaging>jar</packaging>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <junit.version>5.7.1</junit.version>
+        <junit.version>5.8.2</junit.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>me.timickb.jigsaw.messenger</groupId>
+            <groupId>me.timickb.jigsaw</groupId>
             <artifactId>Messenger</artifactId>
             <version>0.1</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>11.0.2</version>
+            <version>18.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>11.0.2</version>
+            <version>18.0.1</version>
         </dependency>
 
         <dependency>
@@ -50,15 +51,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>me.timickb.jigsaw.messenger</groupId>
-            <artifactId>Messenger</artifactId>
-            <version>0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>me.timickb.jigsaw.server</groupId>
+            <groupId>me.timickb.jigsaw</groupId>
             <artifactId>Server</artifactId>
             <version>0.1</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 

@@ -5,9 +5,6 @@ import me.timickb.jigsaw.client.domain.Game;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.sql.Time;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class GameTest {
 

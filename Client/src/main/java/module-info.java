@@ -1,8 +1,7 @@
-module me.timickb.jigsaw {
+module Client {
     requires javafx.controls;
     requires javafx.fxml;
-    requires me.timickb.jigsaw.messenger;
-    requires me.timickb.jigsaw.server;
+    requires Messenger;
 
     opens me.timickb.jigsaw.client to javafx.fxml;
     exports me.timickb.jigsaw.client;

@@ -1,3 +1,3 @@
-module me.timickb.jigsaw.messenger {
+module Messenger {
     exports me.timickb.jigsaw.messenger;
 }
