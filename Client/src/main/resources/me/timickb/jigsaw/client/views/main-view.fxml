@@ -20,7 +20,7 @@
                         styleClass="label"
                         GridPane.columnIndex="0"
                         GridPane.rowIndex="0">
-                    Ходы: 0
+                    Ожидание партнера
                 </Label>
             </left>
             <right>
@@ -40,16 +40,19 @@
                 <Insets bottom="10.0" left="15.0" right="15.0" top="10.0"/>
             </padding>
             <Button
-                    fx:id="startButton"
+                    fx:id="stopButton"
                     GridPane.columnIndex="0"
                     GridPane.rowIndex="0">
-                Новая игра
+                Завершить игру
             </Button>
+            <padding>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="10.0"/>
+            </padding>
             <Button
-                    fx:id="exitButton"
+                    fx:id="statsButton"
                     GridPane.columnIndex="0"
-                    GridPane.rowIndex="1">
-                Выйти
+                    GridPane.rowIndex="0">
+                ТОП 10 игр
             </Button>
             <HBox fx:id="spawnerPaneContainer"
                   GridPane.columnIndex="0"
@@ -63,6 +66,18 @@
                         fx:id="spawnerPane">
                 </Pane>
             </HBox>
+            <Label
+                    fx:id="myLoginView"
+                    styleClass="login-label"
+                    GridPane.columnIndex="0"
+                    GridPane.rowIndex="3">
+            </Label>
+            <Label
+                    fx:id="infoView"
+                    styleClass="info-label"
+                    GridPane.columnIndex="0"
+                    GridPane.rowIndex="4">
+            </Label>
         </GridPane>
     </left>
     <right>

@@ -14,6 +14,7 @@ public class LoggingService {
         String datetime = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")
                 .format(new java.util.Date());
         System.out.printf("[%s] [%s] (%s) %s%n", level, datetime, source, message);
+        System.out.print("> ");
     }
 
     public void info(String message) {

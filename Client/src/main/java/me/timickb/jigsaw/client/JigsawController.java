@@ -3,25 +3,27 @@ package me.timickb.jigsaw.client;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import javafx.util.Pair;
-import me.timickb.jigsaw.client.domain.GameResult;
 import me.timickb.jigsaw.client.domain.Field;
 import me.timickb.jigsaw.client.domain.Figure;
 import me.timickb.jigsaw.client.domain.Game;
+import me.timickb.jigsaw.client.domain.GameResult;
+import me.timickb.jigsaw.messenger.MessageType;
 
+import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
@@ -29,75 +31,206 @@ import java.util.ResourceBundle;
  */
 public class JigsawController implements Initializable {
     @FXML
+    public Button statsButton;
+    @FXML
     private GridPane fieldView;
     @FXML
-    private Button exitButton;
-    @FXML
-    private Button startButton;
+    private Button stopButton;
     @FXML
     private Pane spawnerPane;
     @FXML
     private Label timeView;
     @FXML
     private Label pointCountView;
+    @FXML
+    private Label myLoginView;
+    @FXML
+    private Label infoView;
 
     private Game game;
     private Group figureView;
+    private Client client;
+    private int gameTimeLimit;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         Timeline gameTimer = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
-            timeView.setText("Время: %d сек.".formatted(game.getSeconds()));
+            timeView.setText("Время: %d / %d сек.".formatted(game.getSeconds(), gameTimeLimit));
             game.incTime();
         }));
         gameTimer.setCycleCount(Animation.INDEFINITE);
 
-        exitButton.setOnMouseClicked(event -> javafx.application.Platform.exit());
-        startButton.setOnMouseClicked(event -> handleStartButtonClick());
+        stopButton.setOnMouseClicked(event -> {
+            try {
+                handleLeaveButtonClick();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        stopButton.setDisable(false);
+        stopButton.setVisible(false);
 
         game = new Game(gameTimer);
+        Platform.runLater(this::connectionDialog);
 
         figureView = new Group();
         new DraggableMaker().makeDraggable(figureView);
-        figureView.setOnMouseReleased(e -> handlePlaceFigure());
+        figureView.setOnMouseReleased(e -> {
+            try {
+                handlePlaceFigure();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+
 
         renderField();
         renderSpawnArea();
     }
 
-    protected void handleStartButtonClick() {
-        if (!game.isGoingOn()) {
-            game.updateFigure();
-            renderSpawnArea();
-            game.start();
-            startButton.setText("Завершить игру");
-        } else {
-            GameResult result = game.end();
-            renderField();
+    public void shutdown() {
+        Platform.exit();
+        if (client != null) {
+            try {
+                client.leave();
+                // client.stop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        System.exit(0);
+    }
 
-            startButton.setText("Новая игра");
-            timeView.setText("Время: 0 сек.");
-            pointCountView.setText("Ходы: 0");
-            figureView.getChildren().clear();
+    /**
+     * Вывод диалога для установки соединения с сервером.
+     */
+    public void connectionDialog() {
+        TextInputDialog dialog = new TextInputDialog("127.0.0.1:5000");
+        dialog.setContentText("Адрес: ");
+        dialog.setTitle("Подключение к серверу игры");
+        dialog.setHeaderText("");
 
-            showGameEndDialog(result);
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            try {
+                String host = result.get().split(":")[0];
+                int port = Integer.parseInt(result.get().split(":")[1]);
+                client = new Client(game, this, host, port);
+                new Thread(client).start();
+            } catch (IOException | NumberFormatException e) {
+                System.out.println("Couldn't connect to server");
+                connectionDialog();
+            }
         }
     }
 
-    protected void handlePlaceFigure() {
+    /**
+     * Выводит информацию об отключении партнера
+     *
+     * @param login Логин партнера
+     */
+    public synchronized void updateInfoLabel(String login) {
+        System.out.println("Someone left");
+        infoView.setText("Игрок " + login + " вышел из игры.");
+    }
+
+    public synchronized void disconnectDialog(String text) throws IOException {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Вы отключены от игры");
+        alert.setHeaderText("Причина: ");
+        alert.setContentText(text);
+        alert.showAndWait();
+    }
+
+    /**
+     * Starts the game.
+     */
+    public synchronized void startGame(int gameTimeLimit) {
+        this.gameTimeLimit = gameTimeLimit;
+        game.start();
+        stopButton.setVisible(true);
+    }
+
+    public synchronized void authorize(String login) {
+        myLoginView.setText(login);
+        System.out.println("Authorized as " + login);
+    }
+
+    /**
+     * Обновляет строку с счетом игроков.
+     *
+     * @param rivalName Никнейм противника. Если его нет - пустая строка.
+     * @param my        Счет данного игрока.
+     * @param rival     Счет противника.
+     */
+    public synchronized void updateScore(String rivalName, int my, int rival) {
+        if (rivalName.isEmpty()) {
+            pointCountView.setText("Счет: " + my);
+            return;
+        }
+        if (game.isGoingOn()) {
+            pointCountView.setText(String.format("Мой счет: %d | Счет %s: %d", my, rivalName, rival));
+            return;
+        }
+        pointCountView.setText(String.format("Счет %s: %d", rivalName, rival));
+    }
+
+    public synchronized void callLoginForm() {
+        TextInputDialog dialog = new TextInputDialog("");
+        dialog.setContentText("Придумайте логин: ");
+        dialog.setHeaderText("Авторизация");
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            try {
+                System.out.println("Logged as: " + result.get());
+                client.login(result.get());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public synchronized void callErrorMessage(String text) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Сообщение");
+        alert.setHeaderText("Ошибка");
+        alert.setContentText(text);
+        alert.showAndWait();
+    }
+
+    protected void handleLeaveButtonClick() throws IOException {
+        if (!game.isGoingOn()) {
+            return;
+        }
+
+        GameResult result = game.end();
+        renderField();
+
+        stopButton.setVisible(false);
+        timeView.setText("");
+        pointCountView.setText(String.format("Ваш результат: %d фигур / %d сек",
+                result.score(), result.seconds()));
+
+        figureView.getChildren().clear();
+        client.sendMessage(MessageType.LEAVE, "");
+
+        showGameEndDialog(result);
+    }
+
+    protected void handlePlaceFigure() throws IOException {
         if (game.getCurrentFigure() == null) {
             return;
         }
 
-        Pair<Long, Long> cellData = computeNearestCell();
+        Pair<Long, Long> cellData = computeNearestCell(fieldView, figureView);
 
         int rowIndex = cellData.getKey().intValue();
         int columnIndex = cellData.getValue().intValue();
 
         if (game.placeFigure(rowIndex, columnIndex)) {
             renderField();
-            game.updateFigure();
-            renderSpawnArea();
+            client.sendMessage(MessageType.FIGURE_PLACED, "");
+
             pointCountView.setText("Ходы: " + game.getScore());
         } else {
             figureView.setTranslateX(0);
@@ -106,7 +239,7 @@ public class JigsawController implements Initializable {
     }
 
     // Перерисовывает область, в которой появляются фигуры.
-    protected void renderSpawnArea() {
+    public void renderSpawnArea() {
         int gap = (int) fieldView.getVgap();
         int areaWidth = Field.CELL_SIZE * 3 + gap * 2;
 
@@ -163,6 +296,7 @@ public class JigsawController implements Initializable {
 
     /**
      * Shows a dialog with game results.
+     *
      * @param result Game result object
      */
     protected void showGameEndDialog(GameResult result) {
@@ -175,9 +309,11 @@ public class JigsawController implements Initializable {
     }
 
     /**
+     * @param fieldView  Game field view
+     * @param figureView Game figure view
      * @return Integer pair: row and column of computed field cell.
      */
-    private Pair<Long, Long> computeNearestCell() {
+    private Pair<Long, Long> computeNearestCell(GridPane fieldView, Group figureView) {
         Bounds fieldInScene = fieldView.localToScene(fieldView.getBoundsInLocal());
         Bounds figureInScene = figureView.localToScene(figureView.getBoundsInLocal());
 

@@ -12,7 +12,7 @@ import java.util.List;
 public class Database implements Closeable {
     public static final String GET_TABLE_QUERY = "SELECT * FROM APP.STATS";
     public static final String INSERT_ROW_QUERY =
-            "INSERT INTO APP.STATS (%s, %s. %s, %s) VALUES (%s, %d, %d, %s)";
+            "INSERT INTO stats(%s, %s, %s, %s) VALUES (?, ?, ?, ?)";
 
     public static final String ID_COLUMN = "id";
     public static final String PLAYER_COLUMN = "player";
@@ -40,13 +40,13 @@ public class Database implements Closeable {
         }
     }
 
-    public void addRecord(GameResult record) throws SQLException {
+    public void addRecord(GameResult record)  {
         if (connection == null) {
             logger.error("Cannot execute insert query: connection is null");
             return;
         }
 
-        connection.prepareStatement(INSERT_ROW_QUERY.formatted(
+        String query = INSERT_ROW_QUERY.formatted(
                 PLAYER_COLUMN,
                 STEPS_COLUMN,
                 SECONDS_COLUMN,
@@ -54,9 +54,20 @@ public class Database implements Closeable {
                 record.player(),
                 record.stepsCount(),
                 record.seconds(),
-                record.endDate().toString())).execute();
+                record.endDate().toString());
 
-        logger.info("New game result (player: %s) added to database.".formatted(record.player()));
+        try {
+            PreparedStatement st = connection.prepareStatement(query);
+            st.setString(1, record.player());
+            st.setInt(2, record.stepsCount());
+            st.setInt(3, record.seconds());
+            st.setDate(4, new java.sql.Date(record.endDate().getTime()));
+            st.executeUpdate();
+            connection.commit();
+            logger.info("New game result (player: %s) added to database.".formatted(record.player()));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public List<GameResult> getTable() throws SQLException {

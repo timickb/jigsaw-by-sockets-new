@@ -1,5 +1,6 @@
 package me.timickb.jigsaw.server;
 
+import me.timickb.jigsaw.messenger.MessageType;
 import me.timickb.jigsaw.server.domain.FigureSpawner;
 import me.timickb.jigsaw.server.domain.FigureSpawnerCreator;
 import me.timickb.jigsaw.server.services.Database;
@@ -12,6 +13,8 @@ import java.net.Socket;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class GameServer implements Runnable {
     public static final int MAX_LOGIN_LENGTH = 20;
@@ -27,6 +30,8 @@ public class GameServer implements Runnable {
     private Player secondPlayer;
     private int currentGameTime;
     private boolean gameGoingOn;
+    private Timer gameTimer;
+
 
     public GameServer(int port, int playersCount, int gameTimeLimit) throws IOException, FigureSpawnerException, SQLException {
         this.serverSocket = new ServerSocket(port);
@@ -36,6 +41,7 @@ public class GameServer implements Runnable {
         this.currentGameTime = 0;
         this.database = new Database();
         this.logger = new LoggingService("SERVER");
+        this.gameTimer = new Timer();
     }
 
     @Override
@@ -58,11 +64,11 @@ public class GameServer implements Runnable {
                 else secondPlayer = player;
 
             }
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
-    public void startGame() {
+    public void startGame() throws IOException, FigureSpawnerException {
         if (getOnlinePlayersCount() < requiredPlayersCount) {
             logger.info("Couldn't start game: not enough players connected.");
             return;
@@ -70,6 +76,38 @@ public class GameServer implements Runnable {
 
         gameGoingOn = true;
         logger.info("Game started!");
+
+        String secondPlayerName = secondPlayer != null ? secondPlayer.getLogin() : "";
+
+        firstPlayer.sendMessage(MessageType.GAME_STARTED,
+                String.format("%s#%d", secondPlayerName, gameTimeLimit));
+        firstPlayer.sendNextFigure();
+        if (secondPlayer != null) {
+            secondPlayer.sendMessage(MessageType.GAME_STARTED,
+                    String.format("%s#%d", firstPlayer.getLogin(), gameTimeLimit));
+            secondPlayer.sendNextFigure();
+        }
+
+        gameTimer = new Timer();
+        gameTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                ++currentGameTime;
+
+                if (currentGameTime % 10 == 0) {
+                    logger.info("Game continuing %ds.".formatted(currentGameTime));
+                }
+
+                if (currentGameTime >= gameTimeLimit) {
+                    try {
+                        endGame();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    this.cancel();
+                }
+            }
+        }, 0L, 1000L);
     }
 
     public void endGame() throws IOException {
@@ -78,6 +116,7 @@ public class GameServer implements Runnable {
             return;
         }
         logger.info("Game over!");
+        gameTimer.cancel();
 
         Player winner = null;
         int maxScore = 0;
@@ -86,12 +125,11 @@ public class GameServer implements Runnable {
             maxScore = firstPlayer.getGameScore();
         }
         if (secondPlayer != null && secondPlayer.getGameScore() >= maxScore) {
-            if ((secondPlayer.getGameScore() != maxScore
-                    || secondPlayer.getLastFigurePlacedMoment() > gameTimeLimit)
-                    && (secondPlayer.getGameScore() <= maxScore)) {
-            } else {
-                winner = secondPlayer;
-            }
+            if ((secondPlayer.getGameScore() == maxScore
+                    && secondPlayer.getLastFigurePlacedMoment() <= gameTimeLimit)
+                    || (secondPlayer.getGameScore() > maxScore)) {
+                        winner = secondPlayer;
+                    }
         }
         Objects.requireNonNull(firstPlayer).sendGameResult(Objects.requireNonNull(winner));
         Objects.requireNonNull(secondPlayer).sendGameResult(Objects.requireNonNull(winner));
@@ -102,7 +140,7 @@ public class GameServer implements Runnable {
     /**
      * Close all entities and stop the server.
      *
-     * @throws IOException
+     * @throws IOException I/O error.
      */
     public void stop() throws IOException {
         logger.info("Stopping server...");

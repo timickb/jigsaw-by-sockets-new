@@ -22,39 +22,31 @@
                     <include>**/*.*</include>
                 </includes>
             </resource>
+            <resource>
+                <directory>src/main/resources/figures</directory>
+                <includes>
+                    <include>**/*.*</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources/database</directory>
+                <includes>
+                    <include>**/*.*</include>
+                </includes>
+            </resource>
         </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.2</version>
                 <configuration>
-                    <source>16</source>
-                    <target>16</target>
+                    <archive>
+                        <manifest>
+                            <mainClass>me.timickb.jigsaw.server.Main</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <archive>
-                                <manifest>
-                                    <mainClass>
-                                        me.timickb.jigsaw.server.Main
-                                    </mainClass>
-                                </manifest>
-                            </archive>
-                            <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                            </descriptorRefs>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

@@ -4,7 +4,19 @@
 
 .label {
     -fx-text-fill: white;
+    -fx-font-size: 17pt;
+    -fx-padding: 5px;
+}
+
+.login-label {
+    -fx-text-fill: black;
     -fx-font-size: 21pt;
+    -fx-padding: 5px;
+}
+
+.info-label {
+    -fx-text-fill: black;
+    -fx-font-size: 14pt;
     -fx-padding: 5px;
 }
 
@@ -16,11 +28,11 @@
 }
 
 
-#startButton {
+#stopButton {
     -fx-padding: 15px;
     -fx-background-color: deepskyblue;
     -fx-text-fill: white;
-    -fx-font-size: 17pt;
+    -fx-font-size: 14pt;
     -fx-font-weight: bold;
     -fx-min-width: 240px;
 }
@@ -28,22 +40,22 @@
 .button {
     -fx-padding: 15px;
     -fx-text-fill: white;
-    -fx-font-size: 17pt;
+    -fx-font-size: 14pt;
     -fx-font-weight: bold;
     -fx-min-width: 240px;
 }
 
 #endButton {
-    .button;
+.button;
     -fx-background-color: deepskyblue;
 }
 
-#startButton:hover {
+#stopButton:hover {
     -fx-background-color: dodgerblue;
 }
 
 #exitButton {
-    .button;
+.button;
     -fx-background-color: #bd4141;
 }
 

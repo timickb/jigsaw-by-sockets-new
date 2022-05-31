@@ -1,6 +1,10 @@
 package me.timickb.jigsaw.client;
 
+import javafx.application.Platform;
+import me.timickb.jigsaw.client.domain.Figure;
 import me.timickb.jigsaw.client.domain.Game;
+import me.timickb.jigsaw.messenger.Message;
+import me.timickb.jigsaw.messenger.MessageType;
 import me.timickb.jigsaw.messenger.Messenger;
 
 import java.io.IOException;
@@ -12,6 +16,8 @@ public class Client implements Runnable {
     private final JigsawController uiController;
     private final Game game;
 
+    private String rivalName;
+
     public Client(Game game, JigsawController uiController, String host, int port) throws IOException {
         socket = new Socket(host, port);
         messenger = new Messenger(socket);
@@ -21,6 +27,96 @@ public class Client implements Runnable {
 
     @Override
     public void run() {
+        try {
+            while (socket.isConnected()) {
+                Message message = messenger.readMessage();
+                if (message.data() == null) {
+                    continue;
+                }
+                Platform.runLater(() -> {
+                    try {
+                        switch (message.type()) {
+                            case LOGIN -> uiController.callLoginForm();
+                            case ERROR -> uiController.callErrorMessage(message.data());
+                            case AUTHORIZED -> authorize(message.data());
+                            case NEW_FIGURE -> handleNewFigure(message.data());
+                            case GAME_STARTED -> startGame(message.data());
+                            case SCORE_UPDATED -> updateScore(message.data());
+                            case DISCONNECT -> uiController.disconnectDialog(message.data());
+                            case SOMEONE_LEFT -> uiController.updateInfoLabel(message.data());
+                            case GAME_OVER -> handleGameOver(message.data());
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
+    private void handleGameOver(String data) throws IOException {
+        uiController.handleLeaveButtonClick();
+        uiController.disconnectDialog(data);
+    }
+
+    private void authorize(String data) {
+        uiController.authorize(data);
+    }
+
+
+    /**
+     * Меняет UI под начало игры.
+     *
+     * @param data Никнейм противника. Если противника нет - пустая строка.
+     */
+    private void startGame(String data) {
+        this.rivalName = data.split("#")[0];
+        int gameTimeLimit = Integer.parseInt(data.split("#")[1]);
+
+        uiController.startGame(gameTimeLimit);
+        uiController.updateScore(rivalName, 0, 0);
+    }
+
+    // Парсит фигуру, которая пришла с сервера,
+    // и передает ее в UI.
+    private void handleNewFigure(String data) {
+        Figure figure = new Figure(parseArray(data));
+        game.updateFigure(figure);
+        uiController.renderSpawnArea();
+    }
+
+    private void updateScore(String data) {
+        int myScore = Integer.parseInt(data.split("#")[0]);
+        int rivalScore = Integer.parseInt(data.split("#")[1]);
+        uiController.updateScore(rivalName, myScore, rivalScore);
+    }
+
+    public void login(String login) throws IOException {
+        messenger.sendMessage(MessageType.LOGIN, login);
+        System.out.println("Message sent");
+    }
+
+    public void leave() throws IOException {
+        messenger.sendMessage(MessageType.LEAVE, "");
+    }
+
+    public void sendMessage(MessageType type, String data) throws IOException {
+        messenger.sendMessage(type, data);
+    }
+
+    private boolean[][] parseArray(String data) {
+        boolean[][] result = new boolean[Figure.MAX_SIZE][Figure.MAX_SIZE];
+        String[] rows = data.split("&");
+        for (int i = 0; i < 3; ++i) {
+            String[] values = rows[i].split("#");
+            for (int j = 0; j < 3; ++j) {
+                if (values[j].equals("1")) {
+                    result[i][j] = true;
+                }
+            }
+        }
+        return result;
     }
 }

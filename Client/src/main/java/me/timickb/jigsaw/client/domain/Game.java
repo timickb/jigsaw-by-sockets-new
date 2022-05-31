@@ -2,23 +2,21 @@ package me.timickb.jigsaw.client.domain;
 
 
 import javafx.animation.Timeline;
-import me.timickb.jigsaw.client.exceptions.FigureSpawnerException;
 
 /**
  * Represents the Jigsaw game.
  */
 public class Game {
     private final Field field;
-    private final FigureSpawner figureSpawner;
-    private Figure currentFigure;
     private final Timeline timer;
+
+    private Figure currentFigure;
     private boolean goingOn;
     private int score;
     private int seconds;
 
     public Game(Timeline timer) {
         field = new Field();
-        figureSpawner = new FigureSpawnerCreator().createFromDefaultFiles();
         this.timer = timer;
     }
 
@@ -38,12 +36,8 @@ public class Game {
         timer.play();
     }
 
-    public void updateFigure() {
-        try {
-            currentFigure = figureSpawner.getNext();
-        } catch (FigureSpawnerException e) {
-            e.printStackTrace();
-        }
+    public void updateFigure(Figure figure) {
+        currentFigure = figure;
     }
 
     /**
