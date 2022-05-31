@@ -15,6 +15,19 @@ public class Main {
     public static final int MIN_PLAYERS = 1;
     public static final int MAX_PLAYERS = 2;
 
+    private static void executeCommand(GameServer server, String command) throws IOException {
+        if (command.equals("stop")) {
+            server.stop();
+            return;
+        }
+        if (command.equals("info")) {
+            server.printGameStatus();
+            return;
+        }
+
+        System.out.println("Unknown command.");
+    }
+
     public static void main(String[] args) {
         System.out.println("--- Jigsaw Server ---");
 
@@ -65,14 +78,7 @@ public class Main {
             while (true) {
                 System.out.print("> ");
                 String command = scanner.nextLine();
-                if (command.equals("stop")) {
-                    server.stop();
-                    break;
-                } else if (command.equals("info")) {
-                    server.printGameStatus();
-                } else {
-                    System.out.println("Unknown command.");
-                }
+                executeCommand(server, command);
             }
         } catch (IOException e) {
             e.printStackTrace();
