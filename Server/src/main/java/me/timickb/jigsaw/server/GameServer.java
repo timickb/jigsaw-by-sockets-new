@@ -2,6 +2,7 @@ package me.timickb.jigsaw.server;
 
 import me.timickb.jigsaw.server.domain.FigureSpawner;
 import me.timickb.jigsaw.server.domain.FigureSpawnerCreator;
+import me.timickb.jigsaw.server.services.Database;
 import me.timickb.jigsaw.server.services.LoggingService;
 import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 
@@ -58,8 +59,6 @@ public class GameServer implements Runnable {
 
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            logger.error("An error occurred while accepting connection.");
         }
     }
 
@@ -102,14 +101,19 @@ public class GameServer implements Runnable {
 
     /**
      * Close all entities and stop the server.
+     *
      * @throws IOException
      */
     public void stop() throws IOException {
+        logger.info("Stopping server...");
         if (gameGoingOn) {
             endGame();
+            logger.info("Game ended");
         }
         database.close();
+        logger.info("Database closed.");
         serverSocket.close();
+        logger.info("Server socket closed.");
     }
 
     /**
@@ -133,6 +137,7 @@ public class GameServer implements Runnable {
 
     /**
      * Generates an ID for next player connected.
+     *
      * @return 1: First's player place was empty; 2: Second's player
      * place was empty; -1: No empty places left.
      */

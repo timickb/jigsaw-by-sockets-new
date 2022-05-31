@@ -1,8 +1,8 @@
 package me.timickb.jigsaw.server.services;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
+@SuppressWarnings("ClassCanBeRecord")
 public class LoggingService {
     private final String source;
 

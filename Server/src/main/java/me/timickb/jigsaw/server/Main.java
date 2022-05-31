@@ -18,6 +18,7 @@ public class Main {
     private static void executeCommand(GameServer server, String command) throws IOException {
         if (command.equals("stop")) {
             server.stop();
+            System.exit(0);
             return;
         }
         if (command.equals("info")) {
@@ -86,8 +87,8 @@ public class Main {
         } catch (FigureSpawnerException e) {
             e.printStackTrace();
             logger.error("Couldn't create game figure spawner");
-        } catch (SQLException throwable) {
-            throwable.printStackTrace();
+        } catch (SQLException e) {
+            logger.error("Couldn't create database connection.");
         } finally {
             logger.error("Server stopped.");
         }
