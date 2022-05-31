@@ -12,7 +12,8 @@ public class Database implements Closeable {
     private final Connection connection;
 
     public Database() throws SQLException {
-        this.connection = DriverManager.getConnection("jdbc:derby://");
+        this.connection = DriverManager
+                .getConnection("jdbc:derby://");
     }
 
     public void addRecord(GameResult record) throws SQLException {

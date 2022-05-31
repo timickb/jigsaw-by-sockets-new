@@ -2,10 +2,12 @@ package me.timickb.jigsaw.server;
 
 import me.timickb.jigsaw.server.domain.FigureSpawner;
 import me.timickb.jigsaw.server.domain.FigureSpawnerCreator;
+import me.timickb.jigsaw.server.domain.LoggingService;
 import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -15,13 +17,14 @@ public class GameServer implements Runnable {
     private final ServerSocket serverSocket;
     private final FigureSpawner figureSpawner;
     private final Database database;
+    private final int gameTimeLimit;
+    private final int requiredPlayersCount;
+    private final LoggingService logger;
 
     private Player firstPlayer;
     private Player secondPlayer;
-
-    private final int gameTimeLimit;
-    private final int requiredPlayersCount;
     private int currentGameTime;
+    private boolean gameGoingOn;
 
     public GameServer(int port, int playersCount, int gameTimeLimit) throws IOException, FigureSpawnerException, SQLException {
         this.serverSocket = new ServerSocket(port);
@@ -30,11 +33,32 @@ public class GameServer implements Runnable {
         this.gameTimeLimit = gameTimeLimit;
         this.currentGameTime = 0;
         this.database = new Database();
+        this.logger = new LoggingService("SERVER");
     }
 
     @Override
     public void run() {
+        try {
+            System.out.println("[SERVER] Waiting for connections.");
 
+            while (!serverSocket.isClosed()) {
+                Socket socket = serverSocket.accept();
+                Player player = new Player(socket, this);
+                new Thread(player).start();
+
+                if (gameGoingOn) {
+                    player.disconnect("Game is already going.");
+                    continue;
+                }
+
+                if (firstPlayer == null) firstPlayer = player;
+                else secondPlayer = player;
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.error("An error occurred while accepting connection.");
+        }
     }
 
     public void startGame() {
@@ -82,6 +106,7 @@ public class GameServer implements Runnable {
 
     /**
      * Rival instance for specified player
+     *
      * @param id Player id
      * @return Optional with rival instance.
      */
@@ -114,5 +139,13 @@ public class GameServer implements Runnable {
 
     public int getRequiredPlayersCount() {
         return requiredPlayersCount;
+    }
+
+    public Database getDatabase() {
+        return database;
+    }
+
+    public boolean isGameGoingOn() {
+        return gameGoingOn;
     }
 }

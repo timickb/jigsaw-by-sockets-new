@@ -4,6 +4,7 @@ import me.timickb.jigsaw.messenger.Message;
 import me.timickb.jigsaw.messenger.MessageType;
 import me.timickb.jigsaw.messenger.Messenger;
 import me.timickb.jigsaw.server.domain.Figure;
+import me.timickb.jigsaw.server.domain.LoggingService;
 import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 
 import java.io.IOException;
@@ -22,6 +23,7 @@ public class Player implements Runnable {
     private final Socket socket;
     private final GameServer server;
     private final Messenger messenger;
+    private final LoggingService logger;
     private final Queue<Figure> figureQueue;
 
     private String login;
@@ -40,14 +42,14 @@ public class Player implements Runnable {
         this.login = "";
         this.gameScore = 0;
         this.figureQueue = new ArrayDeque<>();
-        messenger = new Messenger(socket);
+        this.messenger = new Messenger(socket);
+        this.logger = new LoggingService("PLAYER %d".formatted(id));
     }
 
     @Override
     public void run() {
         try {
-            System.out.printf("[Player %d] I'm connected.\n", id);
-
+            logger.info("I'm connected");
             requestLogin(messenger);
 
             // Communication loop
@@ -62,7 +64,7 @@ public class Player implements Runnable {
 
         } catch (IOException e) {
             server.removePlayer(id);
-            System.out.printf("[Player %d] I'm disconnected\n", id);
+            logger.info("I'm disconnected");
         } catch (FigureSpawnerException e) {
             e.printStackTrace();
         }
@@ -104,7 +106,7 @@ public class Player implements Runnable {
         while (true) {
             messenger.sendMessage(MessageType.LOGIN, "");
 
-            System.out.printf("[Player %d] Login request was sent\n", id);
+            logger.info("Login request was sent");
 
             answer = messenger.readMessage();
             if (answer.type() == MessageType.LOGIN && !answer.data().isEmpty()
@@ -113,7 +115,7 @@ public class Player implements Runnable {
                 this.login = answer.data();
                 messenger.sendMessage(MessageType.AUTHORIZED, this.login);
 
-                System.out.printf("[Player %d] Authorized\n", this.id);
+                logger.info("I'm authorized");
 
                 // Если достаточно игроков набрано - запускаем игру.
                 if (server.getOnlinePlayersCount() == server.getRequiredPlayersCount()) {
@@ -147,7 +149,7 @@ public class Player implements Runnable {
 
     public synchronized void disconnect(String reason) throws IOException {
         messenger.sendMessage(MessageType.DISCONNECT, reason);
-        System.out.printf("[Player %d] Disconnected: %s\n", id, reason);
+        logger.info("Disconnected: %s".formatted(reason));
         messenger.close();
         socket.close();
     }
