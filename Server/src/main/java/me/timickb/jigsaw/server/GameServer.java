@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.Optional;
 
 public class GameServer implements Runnable {
@@ -72,16 +73,66 @@ public class GameServer implements Runnable {
         logger.info("Game started!");
     }
 
+    public void endGame() throws IOException {
+        if (!gameGoingOn) {
+            logger.error("Game isn't running.");
+            return;
+        }
+        logger.info("Game over!");
+
+        Player winner = null;
+        int maxScore = 0;
+        if (firstPlayer != null && firstPlayer.getGameScore() > maxScore) {
+            winner = firstPlayer;
+            maxScore = firstPlayer.getGameScore();
+        }
+        if (secondPlayer != null && secondPlayer.getGameScore() >= maxScore) {
+            if ((secondPlayer.getGameScore() != maxScore
+                    || secondPlayer.getLastFigurePlacedMoment() > gameTimeLimit)
+                    && (secondPlayer.getGameScore() <= maxScore)) {
+            } else {
+                winner = secondPlayer;
+            }
+        }
+        Objects.requireNonNull(firstPlayer).sendGameResult(Objects.requireNonNull(winner));
+        Objects.requireNonNull(secondPlayer).sendGameResult(Objects.requireNonNull(winner));
+
+        gameGoingOn = false;
+    }
+
+    /**
+     * Close all entities and stop the server.
+     * @throws IOException
+     */
     public void stop() throws IOException {
+        if (gameGoingOn) {
+            endGame();
+        }
         database.close();
         serverSocket.close();
     }
 
+    /**
+     * Prints console information for
+     * the "info" command.
+     */
     public void printGameStatus() {
-        // TODO
+        System.out.print("Game status: ");
+        if (gameGoingOn) {
+            System.out.println("started");
+        } else {
+            System.out.println("waiting for players");
+        }
+        System.out.println();
+        System.out.println("There are " + getOnlinePlayersCount() + " players:");
+        System.out.println();
+
+        if (firstPlayer != null) System.out.println(firstPlayer);
+        if (secondPlayer != null) System.out.println(secondPlayer);
     }
 
     /**
+     * Generates an ID for next player connected.
      * @return 1: First's player place was empty; 2: Second's player
      * place was empty; -1: No empty places left.
      */
@@ -89,7 +140,7 @@ public class GameServer implements Runnable {
         if (firstPlayer == null) {
             return 1;
         }
-        if (secondPlayer == null) {
+        if (secondPlayer == null && requiredPlayersCount > 1) {
             return 2;
         }
         return -1;
@@ -144,14 +195,23 @@ public class GameServer implements Runnable {
         return currentGameTime;
     }
 
+    /**
+     * @return Amount of players required in the game.
+     */
     public int getRequiredPlayersCount() {
         return requiredPlayersCount;
     }
 
+    /**
+     * @return Database client instance.
+     */
     public Database getDatabase() {
         return database;
     }
 
+    /**
+     * @return Game status flag.
+     */
     public boolean isGameGoingOn() {
         return gameGoingOn;
     }

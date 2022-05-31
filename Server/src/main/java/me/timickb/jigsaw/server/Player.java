@@ -4,15 +4,14 @@ import me.timickb.jigsaw.messenger.Message;
 import me.timickb.jigsaw.messenger.MessageType;
 import me.timickb.jigsaw.messenger.Messenger;
 import me.timickb.jigsaw.server.domain.Figure;
+import me.timickb.jigsaw.server.domain.GameResult;
 import me.timickb.jigsaw.server.services.LoggingService;
 import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayDeque;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Queue;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * Represents the connection instance between
@@ -158,6 +157,15 @@ public class Player implements Runnable {
         String text = String.format("Game over. The winner is %s with score %d and time %ds.",
                 winner.getLogin(), winner.getGameScore(), winner.getLastFigurePlacedMoment());
         messenger.sendMessage(MessageType.GAME_OVER, text);
+    }
+
+    public void sendGameTable() throws SQLException, IOException {
+        List<GameResult> table = server.getDatabase().getTable();
+        StringBuilder result = new StringBuilder();
+        for (GameResult item : table) {
+            result.append(item).append("\n");
+        }
+        messenger.sendMessage(MessageType.GAME_TABLE, result.toString());
     }
 
     @Override
