@@ -1,9 +1,9 @@
 package me.timickb.jigsaw.server;
 
+import me.timickb.jigsaw.server.services.LoggingService;
 import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 
 import java.io.IOException;
-import java.net.URL;
 import java.sql.SQLException;
 import java.util.Scanner;
 
@@ -18,6 +18,8 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("--- Jigsaw Server ---");
 
+        LoggingService logger = new LoggingService("MAIN");
+
         int serverPort = DEFAULT_PORT;
         int playersCount = DEFAULT_MAX_PLAYERS;
         int gameTime = DEFAULT_GAME_TIME;
@@ -26,7 +28,7 @@ public class Main {
             try {
                 serverPort = Integer.parseInt(args[0]);
             } catch (NumberFormatException e) {
-                System.out.println("[ERROR] Server port must be a string. Using default port.");
+                logger.error("Server port must be a string. Using default port.");
             }
         }
 
@@ -34,10 +36,10 @@ public class Main {
             try {
                 playersCount = Integer.parseInt(args[1]);
             } catch (NumberFormatException e) {
-                System.out.println("[ERROR] Players count must be a number. Using default value.");
+                logger.error("Players count must be a number. Using default value.");
             }
             if (playersCount < MIN_PLAYERS || playersCount > MAX_PLAYERS) {
-                System.out.println("[ERROR] Players count must be 1 or 2. Using default value");
+                logger.error("Players count must be 1 or 2. Using default value");
             }
         }
 
@@ -45,22 +47,19 @@ public class Main {
             try {
                 gameTime = Integer.parseInt(args[2]);
             } catch (NumberFormatException e) {
-                System.out.println("[ERROR] Game time must be a number of seconds. Using default value.");
+                logger.error("Game time must be a number of seconds. Using default value.");
             }
             if (gameTime < 5) {
-                System.out.println("[ERROR] Game time must be equal or above than 5 seconds." +
-                        "Using default value");
+                logger.error("Game time must be equal or above than 5 seconds. Using default value");
             }
         }
 
         try {
-            System.out.println("Starting on port " + serverPort + "...");
+            logger.info("Starting server on port %d...".formatted(serverPort));
 
             GameServer server = new GameServer(serverPort, playersCount, gameTime);
             Thread serverThread = new Thread(server);
             serverThread.start();
-
-            System.out.println("Server started.");
 
             Scanner scanner = new Scanner(System.in);
             while (true) {
@@ -77,14 +76,14 @@ public class Main {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("[FATAL] I/O error. Shutdown server.");
+            logger.error("I/O error. Shutdown server.");
         } catch (FigureSpawnerException e) {
             e.printStackTrace();
-            System.out.println("[FATAL] Couldn't create game figure spawner");
+            logger.error("Couldn't create game figure spawner");
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         } finally {
-            System.out.println("Server stopped.");
+            logger.error("Server stopped.");
         }
     }
 }

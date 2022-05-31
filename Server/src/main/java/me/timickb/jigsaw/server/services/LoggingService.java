@@ -1,4 +1,4 @@
-package me.timickb.jigsaw.server.domain;
+package me.timickb.jigsaw.server.services;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

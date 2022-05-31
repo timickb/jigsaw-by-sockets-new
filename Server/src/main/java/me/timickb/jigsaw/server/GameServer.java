@@ -2,7 +2,7 @@ package me.timickb.jigsaw.server;
 
 import me.timickb.jigsaw.server.domain.FigureSpawner;
 import me.timickb.jigsaw.server.domain.FigureSpawnerCreator;
-import me.timickb.jigsaw.server.domain.LoggingService;
+import me.timickb.jigsaw.server.services.LoggingService;
 import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 
 import java.io.IOException;
@@ -38,8 +38,9 @@ public class GameServer implements Runnable {
 
     @Override
     public void run() {
+        logger.info("Server started.");
         try {
-            System.out.println("[SERVER] Waiting for connections.");
+            logger.info("Waiting for connections...");
 
             while (!serverSocket.isClosed()) {
                 Socket socket = serverSocket.accept();
@@ -62,7 +63,13 @@ public class GameServer implements Runnable {
     }
 
     public void startGame() {
-        // TODO
+        if (getOnlinePlayersCount() < requiredPlayersCount) {
+            logger.info("Couldn't start game: not enough players connected.");
+            return;
+        }
+
+        gameGoingOn = true;
+        logger.info("Game started!");
     }
 
     public void stop() throws IOException {

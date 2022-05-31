@@ -4,7 +4,7 @@ import me.timickb.jigsaw.messenger.Message;
 import me.timickb.jigsaw.messenger.MessageType;
 import me.timickb.jigsaw.messenger.Messenger;
 import me.timickb.jigsaw.server.domain.Figure;
-import me.timickb.jigsaw.server.domain.LoggingService;
+import me.timickb.jigsaw.server.services.LoggingService;
 import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
 
 import java.io.IOException;
