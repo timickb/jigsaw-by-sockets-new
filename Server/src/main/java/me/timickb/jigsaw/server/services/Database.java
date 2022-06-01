@@ -6,7 +6,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -26,7 +25,7 @@ public class Database implements Closeable {
 
     public static final String ID_COLUMN = "id";
     public static final String PLAYER_COLUMN = "player";
-    public static final String STEPS_COLUMN = "steps_count";
+    public static final String STEPS_COLUMN = "score";
     public static final String SECONDS_COLUMN = "seconds";
     public static final String DATE_COLUMN = "end_date";
 
@@ -43,8 +42,9 @@ public class Database implements Closeable {
 
     /**
      * Creates database instance and establishes connection.
+     *
      * @throws SQLException Thrown when its impossible to establish
-     * database connection.
+     *                      database connection.
      */
     public Database() throws SQLException {
         this.connection = DriverManager.getConnection(getConnectionString());
@@ -54,8 +54,6 @@ public class Database implements Closeable {
             logger.info("Database connection established.");
         }
 
-        // addRecord(new GameResult(1, "aa", 1, 1, new Date(System.currentTimeMillis())));
-
         List<GameResult> list = getTable();
         for (GameResult item : list) {
             System.out.println(item);
@@ -64,9 +62,10 @@ public class Database implements Closeable {
 
     /**
      * Adds new row to the stats table.
+     *
      * @param record GameResult instance.
      */
-    public void addRecord(GameResult record)  {
+    public void addRecord(GameResult record) {
         if (connection == null) {
             logger.error("Cannot execute insert query: connection is null");
             return;
@@ -82,7 +81,7 @@ public class Database implements Closeable {
             PreparedStatement st = connection.prepareStatement(query);
             st.setInt(2, record.stepsCount());
             st.setInt(3, record.seconds());
-            st.setDate(4, new Date(0));
+            st.setInt(4, record.endDate());
             st.setString(1, record.player());
             st.executeUpdate();
             connection.commit();
@@ -94,9 +93,10 @@ public class Database implements Closeable {
 
     /**
      * Get stats table data.
+     *
      * @return List of GameResult instances.
      * @throws SQLException Thrown when it is impossible to execute
-     * a query to database.
+     *                      a query to database.
      */
     public List<GameResult> getTable() throws SQLException {
         List<GameResult> table = new ArrayList<>();
@@ -115,7 +115,7 @@ public class Database implements Closeable {
                             row.getString(PLAYER_COLUMN),
                             row.getInt(STEPS_COLUMN),
                             row.getInt(SECONDS_COLUMN),
-                            row.getDate(DATE_COLUMN)
+                            row.getInt(DATE_COLUMN)
                     );
                     table.add(item);
                 }
@@ -123,10 +123,10 @@ public class Database implements Closeable {
 
         }
 
+        // Сортировка: время - по возрастанию, счет - по убыванию.
         table.sort(
                 Comparator.comparing(GameResult::seconds)
-                        .thenComparing(GameResult::stepsCount)
-                        .thenComparing(GameResult::player)
+                        .thenComparing(GameResult::stepsCount).reversed()
         );
 
         return table.stream().limit(10).collect(Collectors.toList());
@@ -134,8 +134,9 @@ public class Database implements Closeable {
 
     /**
      * Removes all data from the stats table.
-     * @throws SQLException  Thrown when it is impossible to execute
-     *      * a query to database.
+     *
+     * @throws SQLException Thrown when it is impossible to execute
+     *                      * a query to database.
      */
     public void clearTable() throws SQLException {
         if (connection == null) {

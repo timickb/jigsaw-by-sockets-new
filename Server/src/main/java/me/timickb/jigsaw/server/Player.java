@@ -28,6 +28,7 @@ public class Player implements Runnable {
     private String login;
     private int gameScore;
     private int lastFigurePlacedMoment;
+    private boolean ready;
 
     /**
      * Creates new player (game client)
@@ -43,6 +44,7 @@ public class Player implements Runnable {
         this.figureQueue = new ArrayDeque<>();
         this.messenger = new Messenger(socket);
         this.logger = new LoggingService("PLAYER %d".formatted(id));
+        this.ready = false;
     }
 
     @Override
@@ -59,6 +61,7 @@ public class Player implements Runnable {
                     case FIGURE_PLACED -> handleFigurePlaced();
                     case LEAVE -> handlePlayerLeave();
                     case STATS_REQUEST -> sendGameTable();
+                    case CLIENT_TIMER_READY -> handlePlayerReady(message.data());
                 }
             }
 
@@ -67,6 +70,16 @@ public class Player implements Runnable {
             logger.info("I'm disconnected");
         } catch (FigureSpawnerException | SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void handlePlayerReady(String seconds) throws IOException {
+        this.ready = true;
+        this.lastFigurePlacedMoment = Integer.parseInt(seconds);
+
+        if (server.getRival(id).isEmpty() ||
+                server.getRival(id).isPresent() && server.getRival(id).get().isReady()) {
+            server.endGame();
         }
     }
 
@@ -190,5 +203,9 @@ public class Player implements Runnable {
 
     public int getLastFigurePlacedMoment() {
         return lastFigurePlacedMoment;
+    }
+
+    public boolean isReady() {
+        return ready;
     }
 }

@@ -28,9 +28,6 @@ public class GameServer implements Runnable {
     private Player secondPlayer;
     private int currentGameTime;
     private boolean gameGoingOn;
-    private Timer gameTimer;
-
-
     public GameServer(int port, int playersCount, int gameTimeLimit) throws IOException, FigureSpawnerException, SQLException {
         this.serverSocket = new ServerSocket(port);
         this.figureSpawner = new FigureSpawnerCreator().createFromDefaultFiles();
@@ -39,7 +36,6 @@ public class GameServer implements Runnable {
         this.currentGameTime = 0;
         this.database = new Database();
         this.logger = new LoggingService("SERVER");
-        this.gameTimer = new Timer();
     }
 
     @Override
@@ -85,27 +81,6 @@ public class GameServer implements Runnable {
                     String.format("%s#%d", firstPlayer.getLogin(), gameTimeLimit));
             secondPlayer.sendNextFigure();
         }
-
-        gameTimer = new Timer();
-        gameTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                ++currentGameTime;
-
-                if (currentGameTime % 10 == 0) {
-                    logger.info("Game continuing %ds.".formatted(currentGameTime));
-                }
-
-                if (currentGameTime >= gameTimeLimit) {
-                    try {
-                        endGame();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    this.cancel();
-                }
-            }
-        }, 0L, 1000L);
     }
 
     public void endGame() throws IOException {
@@ -114,7 +89,6 @@ public class GameServer implements Runnable {
             return;
         }
         logger.info("Game over!");
-        gameTimer.cancel();
 
         savePlayerResult(firstPlayer);
         savePlayerResult(secondPlayer);
@@ -134,11 +108,13 @@ public class GameServer implements Runnable {
         if (player == null) {
             return;
         }
+
+        int currentUnixTime = (int) (System.currentTimeMillis() / 1000);
         database.addRecord(new GameResult(0,
                 player.getLogin(),
                 player.getGameScore(),
                 player.getLastFigurePlacedMoment(),
-                new Date(System.currentTimeMillis())));
+                currentUnixTime));
     }
 
     /**

@@ -22,7 +22,7 @@ import javafx.util.Pair;
 import me.timickb.jigsaw.client.domain.Field;
 import me.timickb.jigsaw.client.domain.Figure;
 import me.timickb.jigsaw.client.domain.Game;
-import me.timickb.jigsaw.client.domain.GameResult;
+import me.timickb.jigsaw.client.domain.LocalGameResult;
 import me.timickb.jigsaw.messenger.MessageType;
 
 import java.io.IOException;
@@ -36,13 +36,13 @@ import java.util.ResourceBundle;
  */
 public class JigsawController implements Initializable {
     @FXML
-    public Button statsButton, stopButton;
+    public Button statsButton, stopButton, restartButton;
     @FXML
     private GridPane fieldView;
     @FXML
     private Pane spawnerPane;
     @FXML
-    private Label timeView, pointCountView, myLoginView, infoView;
+    private Label timeView, pointCountView, myLoginView, infoView, gameStatusLabel;
 
     private Game game;
     private Group figureView;
@@ -51,21 +51,43 @@ public class JigsawController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        init();
+    }
+
+    public void init() {
         Timeline gameTimer = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             timeView.setText("Время: %d / %d сек.".formatted(game.getSeconds(), gameTimeLimit));
             game.incTime();
+            // Автоматическое завершение игры
+            if (game.getSeconds() >= gameTimeLimit) {
+                try {
+                    handleGameStop();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
         }));
+
         gameTimer.setCycleCount(Animation.INDEFINITE);
 
         stopButton.setOnMouseClicked(event -> {
             try {
-                handleLeaveButtonClick();
+                handleGameStop();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
-        stopButton.setDisable(false);
+
+        restartButton.setOnMouseClicked(event -> {
+            try {
+                handleGameRestart();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
         stopButton.setVisible(false);
+        restartButton.setVisible(false);
 
         statsButton.setOnMouseClicked(event -> {
             try {
@@ -93,8 +115,13 @@ public class JigsawController implements Initializable {
         renderSpawnArea();
     }
 
-    private void handleStatsButtonClick() throws IOException {
-        client.sendMessage(MessageType.STATS_REQUEST, "");
+    private void handleGameRestart() throws IOException {
+        client.leave();
+        init();
+    }
+
+    public void handleStatsButtonClick() throws IOException {
+        client.sendEmptyMessage(MessageType.STATS_REQUEST);
     }
 
     /**
@@ -140,13 +167,14 @@ public class JigsawController implements Initializable {
      * Вывод диалога для установки соединения с сервером.
      */
     public void connectionDialog() {
-        TextInputDialog dialog = new TextInputDialog("127.0.0.1:5000");
+        TextInputDialog dialog = new TextInputDialog("127.0.0.1:5001");
         dialog.setContentText("Адрес: ");
         dialog.setTitle("Подключение к серверу игры");
         dialog.setHeaderText("");
 
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
+            System.out.println(result.get());
             try {
                 String host = result.get().split(":")[0];
                 int port = Integer.parseInt(result.get().split(":")[1]);
@@ -165,7 +193,6 @@ public class JigsawController implements Initializable {
      * @param login Логин партнера
      */
     public synchronized void updateInfoLabel(String login) {
-        System.out.println("Someone left");
         infoView.setText("Игрок " + login + " вышел из игры.");
     }
 
@@ -176,6 +203,7 @@ public class JigsawController implements Initializable {
      * @param exit True: close application after alert, false: keep opened
      */
     public synchronized void disconnectDialog(String text, boolean exit) {
+        gameStatusLabel.setText("");
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Вы отключены от игры");
         alert.setHeaderText("Причина: ");
@@ -243,26 +271,28 @@ public class JigsawController implements Initializable {
         alert.showAndWait();
     }
 
-    protected void handleLeaveButtonClick() throws IOException {
+    public void handleGameStop() throws IOException {
         if (!game.isGoingOn()) {
             return;
         }
 
-        GameResult result = game.end();
+        LocalGameResult result = game.end();
         renderField();
 
         stopButton.setVisible(false);
         timeView.setText("");
         pointCountView.setText(String.format("Ваш результат: %d фигур / %d сек",
                 result.score(), result.seconds()));
+        gameStatusLabel.setText("Время вышло! Ожидание результатов");
+        restartButton.setVisible(true);
 
         figureView.getChildren().clear();
-        client.sendMessage(MessageType.LEAVE, "");
+        client.sendMessage(MessageType.CLIENT_TIMER_READY, Integer.toString(result.seconds()));
 
         showGameEndDialog(result);
     }
 
-    protected void handlePlaceFigure() throws IOException {
+    public void handlePlaceFigure() throws IOException {
         if (game.getCurrentFigure() == null) {
             return;
         }
@@ -283,7 +313,9 @@ public class JigsawController implements Initializable {
         }
     }
 
-    // Перерисовывает область, в которой появляются фигуры.
+    /**
+     * Перерисовывает область, в которой появляются фигуры.
+     */
     public void renderSpawnArea() {
         int gap = (int) fieldView.getVgap();
         int areaWidth = Field.CELL_SIZE * 3 + gap * 2;
@@ -315,7 +347,9 @@ public class JigsawController implements Initializable {
         spawnerPane.getChildren().add(figureView);
     }
 
-    // Перерисовывает игровое поле
+    /**
+     * Перерисовывает игровое поле.
+     */
     protected void renderField() {
         for (int i = 0; i < Field.SIZE; i++) {
             for (int j = 0; j < Field.SIZE; ++j) {
@@ -324,7 +358,12 @@ public class JigsawController implements Initializable {
         }
     }
 
-    // Рисует конкретную ячейку поля
+    /**
+     * Рисует ячейку игрового поля.
+     * @param row Номер строки.
+     * @param col Номер столбца.
+     * @return Получившийся квадрат.
+     */
     protected Rectangle renderFieldCell(int row, int col) {
         Rectangle cell = new Rectangle();
         cell.setWidth(Field.CELL_SIZE);
@@ -344,7 +383,7 @@ public class JigsawController implements Initializable {
      *
      * @param result Game result object
      */
-    protected void showGameEndDialog(GameResult result) {
+    protected void showGameEndDialog(LocalGameResult result) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Сообщение");
         alert.setHeaderText("Игра завершена");
@@ -358,7 +397,7 @@ public class JigsawController implements Initializable {
      * @param figureView Game figure view
      * @return Integer pair: row and column of computed field cell.
      */
-    private Pair<Long, Long> computeNearestCell(GridPane fieldView, Group figureView) {
+    public Pair<Long, Long> computeNearestCell(GridPane fieldView, Group figureView) {
         Bounds fieldInScene = fieldView.localToScene(fieldView.getBoundsInLocal());
         Bounds figureInScene = figureView.localToScene(figureView.getBoundsInLocal());
 
@@ -372,5 +411,9 @@ public class JigsawController implements Initializable {
         long rowIndex = Math.round((figureY - fieldY) / (Field.CELL_SIZE + 5));
 
         return new Pair<>(columnIndex, rowIndex);
+    }
+
+    public Client getClient() {
+        return client;
     }
 }

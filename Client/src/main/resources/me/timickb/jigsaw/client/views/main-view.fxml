@@ -51,9 +51,18 @@
                     GridPane.rowIndex="1">
                 Завершить игру
             </Button>
+            <Button
+                    fx:id="restartButton"
+                    GridPane.columnIndex="0"
+                    GridPane.rowIndex="2">
+                Подключиться снова
+            </Button>
+
+            <Label fx:id="gameStatusLabel" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+
             <HBox fx:id="spawnerPaneContainer"
                   GridPane.columnIndex="0"
-                  GridPane.rowIndex="2">
+                  GridPane.rowIndex="4">
                 <padding>
                     <Insets bottom="5.0" left="15.0" right="15.0" top="5.0"/>
                 </padding>

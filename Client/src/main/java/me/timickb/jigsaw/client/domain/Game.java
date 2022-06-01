@@ -88,14 +88,16 @@ public class Game {
      *
      * @return The game result.
      */
-    public GameResult end() {
+    public LocalGameResult end() {
         if (!goingOn) return null;
 
         timer.stop();
         field.clear();
         goingOn = false;
 
-        return new GameResult(score, seconds);
+
+
+        return new LocalGameResult(score, seconds);
     }
 
     public boolean isGoingOn() {

@@ -4,10 +4,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
-import me.timickb.jigsaw.client.domain.GameResult;
 
 import java.net.URL;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.ResourceBundle;
 
 public class StatsController implements Initializable {
@@ -29,15 +29,24 @@ public class StatsController implements Initializable {
         String[] rows = data.split("@");
         for (int rowId = 0; rowId < rows.length; ++rowId) {
             String[] items = rows[rowId].split(";");
-            for (int colId = 0; colId < items.length; ++colId) {
-                Label cell = new Label(items[colId]);
-                if (colId == 0 || colId == 3) {
-                    cell.getStyleClass().add("table-label-long");
-                } else {
-                    cell.getStyleClass().add("table-label-short");
-                }
-                statsTable.add(cell, colId, rowId + 1);
-            }
+
+            Date parsed = new java.util.Date((long) (Integer.parseInt(items[3])) * 1000);
+
+            Label player = new Label(items[0]);
+            Label score = new Label(items[1]);
+            Label seconds = new Label(items[2]);
+            Label date = new Label(
+                    new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(parsed));
+
+            player.getStyleClass().add("table-label-long");
+            date.getStyleClass().add("table-label-long");
+            score.getStyleClass().add("table-label-short");
+            seconds.getStyleClass().add("table-label-short");
+
+            statsTable.add(player, 0, rowId + 1);
+            statsTable.add(score, 1, rowId + 1);
+            statsTable.add(seconds, 2, rowId + 1);
+            statsTable.add(date, 3, rowId + 1);
         }
     }
 }

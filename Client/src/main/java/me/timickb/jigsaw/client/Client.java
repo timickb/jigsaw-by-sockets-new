@@ -34,21 +34,17 @@ public class Client implements Runnable {
                     continue;
                 }
                 Platform.runLater(() -> {
-                    try {
-                        switch (message.type()) {
-                            case LOGIN -> uiController.callLoginForm();
-                            case ERROR -> uiController.callErrorMessage(message.data());
-                            case AUTHORIZED -> authorize(message.data());
-                            case NEW_FIGURE -> handleNewFigure(message.data());
-                            case GAME_STARTED -> startGame(message.data());
-                            case SCORE_UPDATED -> updateScore(message.data());
-                            case DISCONNECT -> uiController.disconnectDialog(message.data(), false);
-                            case SOMEONE_LEFT -> uiController.updateInfoLabel(message.data());
-                            case GAME_OVER -> handleGameOver(message.data());
-                            case STATS_RESPONSE -> uiController.openStatsWindow(message.data());
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    switch (message.type()) {
+                        case LOGIN -> uiController.callLoginForm();
+                        case ERROR -> uiController.callErrorMessage(message.data());
+                        case AUTHORIZED -> authorize(message.data());
+                        case NEW_FIGURE -> handleNewFigure(message.data());
+                        case GAME_STARTED -> startGame(message.data());
+                        case SCORE_UPDATED -> updateScore(message.data());
+                        case DISCONNECT, GAME_OVER ->
+                                uiController.disconnectDialog(message.data(), false);
+                        case SOMEONE_LEFT -> uiController.updateInfoLabel(message.data());
+                        case STATS_RESPONSE -> uiController.openStatsWindow(message.data());
                     }
                 });
             }
@@ -58,15 +54,9 @@ public class Client implements Runnable {
         }
     }
 
-    private void handleGameOver(String data) throws IOException {
-        uiController.handleLeaveButtonClick();
-        uiController.disconnectDialog(data, false);
-    }
-
     private void authorize(String data) {
         uiController.authorize(data);
     }
-
 
     /**
      * Меняет UI под начало игры.
@@ -84,6 +74,9 @@ public class Client implements Runnable {
     // Парсит фигуру, которая пришла с сервера,
     // и передает ее в UI.
     private void handleNewFigure(String data) {
+        if (!game.isGoingOn()) {
+            return;
+        }
         Figure figure = new Figure(parseArray(data));
         game.updateFigure(figure);
         uiController.renderSpawnArea();
@@ -106,6 +99,10 @@ public class Client implements Runnable {
 
     public void sendMessage(MessageType type, String data) throws IOException {
         messenger.sendMessage(type, data);
+    }
+
+    public void sendEmptyMessage(MessageType type) throws IOException {
+        messenger.sendMessage(type);
     }
 
     private boolean[][] parseArray(String data) {

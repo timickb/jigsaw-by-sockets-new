@@ -52,7 +52,7 @@
 }
 
 
-#stopButton {
+#stopButton, #restartButton {
     -fx-padding: 15px;
     -fx-background-color: deepskyblue;
     -fx-text-fill: white;
@@ -108,4 +108,10 @@
 #statsTable {
     -fx-content-display: flex;
     -fx-alignment: center;
+}
+
+#gameStatusLabel {
+    -fx-padding: 10px;
+    -fx-font-size: 14pt;
+    -fx-text-fill: black;
 }

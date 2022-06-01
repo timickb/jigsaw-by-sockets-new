@@ -1,7 +1,6 @@
 package me.timickb.jigsaw.domain;
 
 import me.timickb.jigsaw.client.domain.Figure;
-import me.timickb.jigsaw.client.domain.FigureSpawner;
 import me.timickb.jigsaw.client.exceptions.FigureFormatException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
