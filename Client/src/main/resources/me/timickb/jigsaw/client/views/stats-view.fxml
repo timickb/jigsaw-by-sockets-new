@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            prefHeight="400.0" prefWidth="600.0">
+
+    <top>
+        <BorderPane style="-fx-background-color: #336699" styleClass="header">
+            <padding>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="10.0"/>
+            </padding>
+            <center>
+                <Label
+                        fx:id="pointCountView"
+                        styleClass="label"
+                        GridPane.columnIndex="0"
+                        GridPane.rowIndex="0">
+                    ТОП 10 ИГР
+                </Label>
+            </center>
+        </BorderPane>
+    </top>
+    <center>
+        <GridPane fx:id="statsTable">
+            <Label
+                    styleClass="table-label-head-long"
+                    GridPane.columnIndex="0"
+                    GridPane.rowIndex="0"
+            >
+                Игрок
+            </Label>
+            <Label
+                    styleClass="table-label-head-short"
+                    GridPane.columnIndex="1"
+                    GridPane.rowIndex="0"
+            >
+                Счет
+            </Label>
+            <Label
+                    styleClass="table-label-head-short"
+                    GridPane.columnIndex="2"
+                    GridPane.rowIndex="0"
+            >
+                Время
+            </Label>
+            <Label
+                    styleClass="table-label-head-long"
+                    GridPane.columnIndex="3"
+                    GridPane.rowIndex="0"
+            >
+                Дата
+            </Label>
+        </GridPane>
+    </center>
+
+</BorderPane>

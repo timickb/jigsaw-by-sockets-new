@@ -9,7 +9,6 @@ import javafx.animation.Timeline;
 public class Game {
     private final Field field;
     private final Timeline timer;
-
     private Figure currentFigure;
     private boolean goingOn;
     private int score;

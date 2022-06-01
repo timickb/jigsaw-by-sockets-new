@@ -10,7 +10,7 @@ import java.util.Scanner;
 public class Main {
     public static final int DEFAULT_PORT = 5001;
     public static final int DEFAULT_MAX_PLAYERS = 2;
-    public static final int DEFAULT_GAME_TIME = 30;
+    public static final int DEFAULT_GAME_TIME = 10;
 
     public static final int MIN_PLAYERS = 1;
     public static final int MAX_PLAYERS = 2;
@@ -87,6 +87,7 @@ public class Main {
             e.printStackTrace();
             logger.error("Couldn't create game figure spawner");
         } catch (SQLException e) {
+            e.printStackTrace();
             logger.error("Couldn't create database connection.");
         } finally {
             logger.error("Server stopped.");

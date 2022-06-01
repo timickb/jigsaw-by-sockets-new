@@ -7,10 +7,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Database implements Closeable {
-    public static final String GET_TABLE_QUERY = "SELECT * FROM APP.STATS";
+    public static final String GET_TABLE_QUERY =
+            "SELECT * FROM APP.STATS ORDER BY end_date DESC";
     public static final String INSERT_ROW_QUERY =
             "INSERT INTO stats(%s, %s, %s, %s) VALUES (?, ?, ?, ?)";
 
@@ -38,6 +41,13 @@ public class Database implements Closeable {
         if (connection != null) {
             logger.info("Database connection established.");
         }
+
+        // addRecord(new GameResult(1, "aa", 1, 1, new Date(System.currentTimeMillis())));
+
+        List<GameResult> list = getTable();
+        for (GameResult item : list) {
+            System.out.println(item);
+        }
     }
 
     public void addRecord(GameResult record)  {
@@ -50,18 +60,14 @@ public class Database implements Closeable {
                 PLAYER_COLUMN,
                 STEPS_COLUMN,
                 SECONDS_COLUMN,
-                DATE_COLUMN,
-                record.player(),
-                record.stepsCount(),
-                record.seconds(),
-                record.endDate().toString());
+                DATE_COLUMN);
 
         try {
             PreparedStatement st = connection.prepareStatement(query);
-            st.setString(1, record.player());
             st.setInt(2, record.stepsCount());
             st.setInt(3, record.seconds());
             st.setDate(4, new java.sql.Date(record.endDate().getTime()));
+            st.setString(1, record.player());
             st.executeUpdate();
             connection.commit();
             logger.info("New game result (player: %s) added to database.".formatted(record.player()));
@@ -94,7 +100,23 @@ public class Database implements Closeable {
             }
 
         }
-        return table;
+
+        table.sort(
+                Comparator.comparing(GameResult::seconds)
+                        .thenComparing(GameResult::stepsCount)
+                        .thenComparing(GameResult::player)
+        );
+
+        return table.stream().limit(10).collect(Collectors.toList());
+    }
+
+    public void clearTable() throws SQLException {
+        if (connection == null) {
+            logger.error("Unable to drop table: connection is null");
+            return;
+        }
+        connection.prepareStatement("DELETE FROM stats WHERE seconds >= 0").executeUpdate();
+        logger.info("Stats table cleared.");
     }
 
     @Override

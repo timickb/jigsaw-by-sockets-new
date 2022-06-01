@@ -3,6 +3,7 @@ package me.timickb.jigsaw.server;
 import me.timickb.jigsaw.messenger.MessageType;
 import me.timickb.jigsaw.server.domain.FigureSpawner;
 import me.timickb.jigsaw.server.domain.FigureSpawnerCreator;
+import me.timickb.jigsaw.server.domain.GameResult;
 import me.timickb.jigsaw.server.services.Database;
 import me.timickb.jigsaw.server.services.LoggingService;
 import me.timickb.jigsaw.server.exceptions.FigureSpawnerException;
@@ -11,10 +12,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class GameServer implements Runnable {
     public static final int MAX_LOGIN_LENGTH = 20;
@@ -118,23 +116,29 @@ public class GameServer implements Runnable {
         logger.info("Game over!");
         gameTimer.cancel();
 
-        Player winner = null;
-        int maxScore = 0;
-        if (firstPlayer != null && firstPlayer.getGameScore() > maxScore) {
-            winner = firstPlayer;
-            maxScore = firstPlayer.getGameScore();
-        }
-        if (secondPlayer != null && secondPlayer.getGameScore() >= maxScore) {
-            if ((secondPlayer.getGameScore() == maxScore
-                    && secondPlayer.getLastFigurePlacedMoment() <= gameTimeLimit)
-                    || (secondPlayer.getGameScore() > maxScore)) {
-                        winner = secondPlayer;
-                    }
-        }
-        Objects.requireNonNull(firstPlayer).sendGameResult(Objects.requireNonNull(winner));
-        Objects.requireNonNull(secondPlayer).sendGameResult(Objects.requireNonNull(winner));
+        savePlayerResult(firstPlayer);
+        savePlayerResult(secondPlayer);
+
+        Player winner = firstPlayer;
+
+        if (firstPlayer != null) firstPlayer.sendGameResult(Objects.requireNonNull(winner));
+        if (secondPlayer != null) secondPlayer.sendGameResult(Objects.requireNonNull(winner));
 
         gameGoingOn = false;
+    }
+
+    /**
+     * @param player Writes player's result to the database.
+     */
+    private void savePlayerResult(Player player) {
+        if (player == null) {
+            return;
+        }
+        database.addRecord(new GameResult(0,
+                player.getLogin(),
+                player.getGameScore(),
+                player.getLastFigurePlacedMoment(),
+                new Date(System.currentTimeMillis())));
     }
 
     /**

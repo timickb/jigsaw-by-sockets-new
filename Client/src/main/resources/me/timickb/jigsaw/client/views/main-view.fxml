@@ -40,19 +40,16 @@
                 <Insets bottom="10.0" left="15.0" right="15.0" top="10.0"/>
             </padding>
             <Button
-                    fx:id="stopButton"
-                    GridPane.columnIndex="0"
-                    GridPane.rowIndex="0">
-                Завершить игру
-            </Button>
-            <padding>
-                <Insets bottom="10.0" left="15.0" right="15.0" top="10.0"/>
-            </padding>
-            <Button
                     fx:id="statsButton"
                     GridPane.columnIndex="0"
                     GridPane.rowIndex="0">
                 ТОП 10 игр
+            </Button>
+            <Button
+                    fx:id="stopButton"
+                    GridPane.columnIndex="0"
+                    GridPane.rowIndex="1">
+                Завершить игру
             </Button>
             <HBox fx:id="spawnerPaneContainer"
                   GridPane.columnIndex="0"

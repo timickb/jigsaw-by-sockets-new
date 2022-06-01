@@ -42,9 +42,10 @@ public class Client implements Runnable {
                             case NEW_FIGURE -> handleNewFigure(message.data());
                             case GAME_STARTED -> startGame(message.data());
                             case SCORE_UPDATED -> updateScore(message.data());
-                            case DISCONNECT -> uiController.disconnectDialog(message.data());
+                            case DISCONNECT -> uiController.disconnectDialog(message.data(), false);
                             case SOMEONE_LEFT -> uiController.updateInfoLabel(message.data());
                             case GAME_OVER -> handleGameOver(message.data());
+                            case STATS_RESPONSE -> uiController.openStatsWindow(message.data());
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -52,13 +53,14 @@ public class Client implements Runnable {
                 });
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Platform.runLater(() -> uiController
+                    .disconnectDialog("Потеряно соединение с сервером", true));
         }
     }
 
     private void handleGameOver(String data) throws IOException {
         uiController.handleLeaveButtonClick();
-        uiController.disconnectDialog(data);
+        uiController.disconnectDialog(data, false);
     }
 
     private void authorize(String data) {

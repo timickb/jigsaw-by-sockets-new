@@ -5,14 +5,18 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Bounds;
 import javafx.scene.Group;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.Pair;
 import me.timickb.jigsaw.client.domain.Field;
@@ -23,6 +27,7 @@ import me.timickb.jigsaw.messenger.MessageType;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -70,6 +75,18 @@ public class JigsawController implements Initializable {
         stopButton.setDisable(false);
         stopButton.setVisible(false);
 
+        statsButton.setOnMouseClicked(event -> {
+            openStatsWindow("player1;0;0;22-03-2019@player2;0;0;22-03-2019" +
+                    "@player2;0;0;22-03-2019@player2;0;0;22-03-2019@player2;0;0;22-03-2019" +
+                    "@player2;0;0;22-03-2019@player2;0;0;22-03-2019@player2;0;0;22-03-2019" +
+                    "@player2;0;0;22-03-2019@player2;0;0;22-03-2019");
+//            try {
+//                handleStatsButtonClick();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+        });
+
         game = new Game(gameTimer);
         Platform.runLater(this::connectionDialog);
 
@@ -86,6 +103,32 @@ public class JigsawController implements Initializable {
 
         renderField();
         renderSpawnArea();
+    }
+
+    private void handleStatsButtonClick() throws IOException {
+        client.sendMessage(MessageType.STATS_REQUEST, "");
+    }
+
+    public void openStatsWindow(String data) {
+        try {
+            String styleSheet = Objects.requireNonNull(getClass()
+                    .getResource(JigsawApplication.STYLE_RESOURCE))
+                    .toExternalForm();
+            FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(getClass()
+                    .getResource("views/stats-view.fxml")));
+            StatsController controller = new StatsController();
+            controller.setData(data);
+            loader.setController(controller);
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.setTitle("ТОП 10 игр");
+            Scene scene = new Scene(root, 800, 600);
+            scene.getStylesheets().add(styleSheet);
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void shutdown() {
@@ -134,12 +177,22 @@ public class JigsawController implements Initializable {
         infoView.setText("Игрок " + login + " вышел из игры.");
     }
 
-    public synchronized void disconnectDialog(String text) throws IOException {
+    /**
+     * Displays an alert about disconnecting from the server/game.
+     *
+     * @param text Reason of disconnecting
+     * @param exit True: close application after alert, false: keep opened
+     */
+    public synchronized void disconnectDialog(String text, boolean exit) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Вы отключены от игры");
         alert.setHeaderText("Причина: ");
         alert.setContentText(text);
         alert.showAndWait();
+        if (exit) {
+            Platform.exit();
+            System.exit(0);
+        }
     }
 
     /**

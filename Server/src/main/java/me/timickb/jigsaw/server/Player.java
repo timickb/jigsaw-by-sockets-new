@@ -58,13 +58,14 @@ public class Player implements Runnable {
                 switch (message.type()) {
                     case FIGURE_PLACED -> handleFigurePlaced();
                     case LEAVE -> handlePlayerLeave();
+                    case STATS_REQUEST -> sendGameTable();
                 }
             }
 
         } catch (IOException e) {
             server.removePlayer(id);
             logger.info("I'm disconnected");
-        } catch (FigureSpawnerException e) {
+        } catch (FigureSpawnerException | SQLException e) {
             e.printStackTrace();
         }
     }
@@ -160,12 +161,13 @@ public class Player implements Runnable {
     }
 
     public void sendGameTable() throws SQLException, IOException {
+        logger.info("Top games table requested");
         List<GameResult> table = server.getDatabase().getTable();
         StringBuilder result = new StringBuilder();
         for (GameResult item : table) {
-            result.append(item).append("\n");
+            result.append(item).append("@");
         }
-        messenger.sendMessage(MessageType.GAME_TABLE, result.toString());
+        messenger.sendMessage(MessageType.STATS_RESPONSE, result.toString());
     }
 
     @Override
