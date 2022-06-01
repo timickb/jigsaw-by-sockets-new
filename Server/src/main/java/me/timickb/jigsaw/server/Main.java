@@ -25,6 +25,14 @@ public class Main {
             server.printGameStatus();
             return;
         }
+        if (command.equals("clear")) {
+            try {
+                server.clearStatsTable();
+            } catch (SQLException e) {
+                System.out.println("SQL error occured.");
+            }
+            return;
+        }
 
         System.out.println("Unknown command.");
     }

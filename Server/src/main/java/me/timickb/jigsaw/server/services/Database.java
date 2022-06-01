@@ -6,6 +6,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -81,7 +82,7 @@ public class Database implements Closeable {
             PreparedStatement st = connection.prepareStatement(query);
             st.setInt(2, record.stepsCount());
             st.setInt(3, record.seconds());
-            st.setDate(4, new java.sql.Date(record.endDate().getTime()));
+            st.setDate(4, new Date(0));
             st.setString(1, record.player());
             st.executeUpdate();
             connection.commit();

@@ -217,10 +217,10 @@ public class GameServer implements Runnable {
      */
     public Optional<Player> getRival(int id) {
         if (id == 1) {
-            return Optional.ofNullable(firstPlayer);
+            return Optional.ofNullable(secondPlayer);
         }
         if (id == 2) {
-            return Optional.ofNullable(secondPlayer);
+            return Optional.ofNullable(firstPlayer);
         }
         return Optional.empty();
     }
@@ -254,6 +254,14 @@ public class GameServer implements Runnable {
      */
     public Database getDatabase() {
         return database;
+    }
+
+    /**
+     * Asks database to clear stats table.
+     * @throws SQLException Impossible to perform sql query.
+     */
+    public void clearStatsTable() throws SQLException {
+        database.clearTable();
     }
 
     /**
