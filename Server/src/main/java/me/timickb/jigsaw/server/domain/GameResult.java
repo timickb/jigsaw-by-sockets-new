@@ -12,6 +12,6 @@ public record GameResult(int id, String player, int stepsCount, int seconds, Dat
 
     public String getMessengerRepresentation() {
         return "%s;%d;%d;%s".formatted(player, stepsCount, seconds,
-                new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date()));
+                new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(endDate));
     }
 }

@@ -36,21 +36,13 @@ import java.util.ResourceBundle;
  */
 public class JigsawController implements Initializable {
     @FXML
-    public Button statsButton;
+    public Button statsButton, stopButton;
     @FXML
     private GridPane fieldView;
     @FXML
-    private Button stopButton;
-    @FXML
     private Pane spawnerPane;
     @FXML
-    private Label timeView;
-    @FXML
-    private Label pointCountView;
-    @FXML
-    private Label myLoginView;
-    @FXML
-    private Label infoView;
+    private Label timeView, pointCountView, myLoginView, infoView;
 
     private Game game;
     private Group figureView;
@@ -76,15 +68,11 @@ public class JigsawController implements Initializable {
         stopButton.setVisible(false);
 
         statsButton.setOnMouseClicked(event -> {
-            openStatsWindow("player1;0;0;22-03-2019@player2;0;0;22-03-2019" +
-                    "@player2;0;0;22-03-2019@player2;0;0;22-03-2019@player2;0;0;22-03-2019" +
-                    "@player2;0;0;22-03-2019@player2;0;0;22-03-2019@player2;0;0;22-03-2019" +
-                    "@player2;0;0;22-03-2019@player2;0;0;22-03-2019");
-//            try {
-//                handleStatsButtonClick();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
+            try {
+                handleStatsButtonClick();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         });
 
         game = new Game(gameTimer);
@@ -109,13 +97,17 @@ public class JigsawController implements Initializable {
         client.sendMessage(MessageType.STATS_REQUEST, "");
     }
 
+    /**
+     * Opens a window which displays top 10 games.
+     * @param data Data received from server.
+     */
     public void openStatsWindow(String data) {
         try {
             String styleSheet = Objects.requireNonNull(getClass()
                     .getResource(JigsawApplication.STYLE_RESOURCE))
                     .toExternalForm();
             FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(getClass()
-                    .getResource("views/stats-view.fxml")));
+                    .getResource(JigsawApplication.STATS_MARKUP_RESOURCE)));
             StatsController controller = new StatsController();
             controller.setData(data);
             loader.setController(controller);

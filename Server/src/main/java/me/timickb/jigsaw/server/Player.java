@@ -165,7 +165,7 @@ public class Player implements Runnable {
         List<GameResult> table = server.getDatabase().getTable();
         StringBuilder result = new StringBuilder();
         for (GameResult item : table) {
-            result.append(item).append("@");
+            result.append(item.getMessengerRepresentation()).append("@");
         }
         messenger.sendMessage(MessageType.STATS_RESPONSE, result.toString());
     }

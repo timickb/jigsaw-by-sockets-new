@@ -15,6 +15,8 @@ public class JigsawApplication extends Application {
 
     public static final String STYLE_RESOURCE = "style.css";
     public static final String MARKUP_RESOURCE = "views/main-view.fxml";
+
+    public static final String STATS_MARKUP_RESOURCE = "views/stats-view.fxml";
     public static final String ICON_RESOURCE = "icon.png";
     public static final String APP_TITLE = "Игра \"Пазл\"";
 

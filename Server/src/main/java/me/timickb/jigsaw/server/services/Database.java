@@ -11,11 +11,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Represents database connection instance.
+ */
 public class Database implements Closeable {
     public static final String GET_TABLE_QUERY =
             "SELECT * FROM APP.STATS ORDER BY end_date DESC";
     public static final String INSERT_ROW_QUERY =
             "INSERT INTO stats(%s, %s, %s, %s) VALUES (?, ?, ?, ?)";
+
+    public static final String CLEAR_TABLE_QUERY =
+            "DELETE FROM stats WHERE seconds >= 0";
 
     public static final String ID_COLUMN = "id";
     public static final String PLAYER_COLUMN = "player";
@@ -34,6 +40,11 @@ public class Database implements Closeable {
         return "jdbc:derby:" + dbUrl.getPath().substring(1);
     }
 
+    /**
+     * Creates database instance and establishes connection.
+     * @throws SQLException Thrown when its impossible to establish
+     * database connection.
+     */
     public Database() throws SQLException {
         this.connection = DriverManager.getConnection(getConnectionString());
         this.logger = new LoggingService("DATABASE");
@@ -50,6 +61,10 @@ public class Database implements Closeable {
         }
     }
 
+    /**
+     * Adds new row to the stats table.
+     * @param record GameResult instance.
+     */
     public void addRecord(GameResult record)  {
         if (connection == null) {
             logger.error("Cannot execute insert query: connection is null");
@@ -76,6 +91,12 @@ public class Database implements Closeable {
         }
     }
 
+    /**
+     * Get stats table data.
+     * @return List of GameResult instances.
+     * @throws SQLException Thrown when it is impossible to execute
+     * a query to database.
+     */
     public List<GameResult> getTable() throws SQLException {
         List<GameResult> table = new ArrayList<>();
 
@@ -110,12 +131,17 @@ public class Database implements Closeable {
         return table.stream().limit(10).collect(Collectors.toList());
     }
 
+    /**
+     * Removes all data from the stats table.
+     * @throws SQLException  Thrown when it is impossible to execute
+     *      * a query to database.
+     */
     public void clearTable() throws SQLException {
         if (connection == null) {
             logger.error("Unable to drop table: connection is null");
             return;
         }
-        connection.prepareStatement("DELETE FROM stats WHERE seconds >= 0").executeUpdate();
+        connection.prepareStatement(CLEAR_TABLE_QUERY).executeUpdate();
         logger.info("Stats table cleared.");
     }
 
